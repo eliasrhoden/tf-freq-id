@@ -57,8 +57,8 @@ G.name = 'True'
 Gi.name = "Identified"
 
 plt.figure()
-ctrl.bode(G)
-ctrl.bode(Gi)
+ctrl.bode_plot(G)
+ctrl.bode_plot(Gi)
 plt.legend()
 
 plt.show()

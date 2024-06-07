@@ -47,8 +47,8 @@ class TfIdent:
         opti = self.opti
 
         tau = opti.variable()
-        opti.subject_to(tau>=0.001)
-        opti.subject_to(tau <= 1e9)
+        opti.subject_to(tau>=0.0001)
+        opti.subject_to(tau <= 100)
         opti.set_initial(tau,10)
 
         return PT1(tau)
