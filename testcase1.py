@@ -9,16 +9,8 @@ s = ctrl.tf('s')
 def pt2(w,d):
     return ctrl.tf(w**2,[1,2*w*d,w**2])
 
-wn = 10
-dn = 0.05
-wd = 96
-dd = 0.31
 
-wd2 = 437
-dd2 = 0.707
-
-
-G = pt2(wd,dd)*1/pt2(wn,dn) * pt2(wd2,dd2) * ctrl.tf([1],[1,0])*10
+G = pt2(40,0.1)*1/pt2(20,0.3) * pt2(600,0.05)*1/pt2(500,0.1) * ctrl.tf([1],[1,0])
 #G =  pt2(wd2,dd2)
 
 G
@@ -45,7 +37,7 @@ plt.figure()
 plt.semilogx(w, phase)
 plt.semilogx(ws, phases,'o-')
 
-m = tf_freq_id.ModelOrder(1,1,0,1,True)
+m = tf_freq_id.ModelOrder(2,2,0,0,True)
 
 id = tf_freq_id.TfIdent(m)
 
@@ -54,8 +46,7 @@ print(Gi)
 
 
 G.name = 'True'
-G0.name = "First opt"
-Gi.name = "Second opt"
+Gi.name = "Identified"
 
 plt.figure()
 ctrl.bode_plot(G)

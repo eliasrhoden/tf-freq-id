@@ -5,7 +5,7 @@ from typing import Protocol
 class TfElement(Protocol):
 
     def get_log_mag(self,w):
-        pass 
+        pass
 
     def get_phase(self,w):
         pass
@@ -27,11 +27,12 @@ class PT1(TfElement):
         return casadi.log10(casadi.sqrt(1 + (w*self.tau)**2))
 
     def get_phase(self,w):
-        return casadi.atan2(w,1)
+        return casadi.atan2(w*self.tau,1)
 
 class PT2(TfElement):
     # Represents a second order polynominal
     # G(s) = 1/wd^2 * (s^2 + 2*s*dd*wd + wd^2)
+
     def __init__(self,wd,dd):
         self.wd = wd
         self.dd = dd
@@ -48,5 +49,5 @@ class PT2(TfElement):
 
     def get_phase(self,w):
         t2Re,t2Im = self._parts(w)
-        return casadi.atan2(t2Im,t2Re) 
+        return casadi.atan2(t2Im,t2Re)
 
