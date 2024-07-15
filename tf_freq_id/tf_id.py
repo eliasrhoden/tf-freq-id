@@ -89,7 +89,7 @@ class TfIdent:
         
 
             if wc_limits:
-                if wc_limits[0] < 10.0:
+                if wc_limits[0] < 1.0:
                     raise Exception("Very low wc limit in PT2 element!")
                 opti.subject_to(wd >= wc_limits[0])
                 opti.subject_to(wd <= wc_limits[1]*0.9)
@@ -142,7 +142,9 @@ class TfIdent:
             m_err = (mag_true - magi)**2
             ph_err = 180/np.pi*(phase[i] - phi)**2
 
-            J += 1e3*m_err + ph_err
+            J_scale = 1/wi
+
+            J += J_scale*(1e3*m_err + ph_err)
         return J
 
 
