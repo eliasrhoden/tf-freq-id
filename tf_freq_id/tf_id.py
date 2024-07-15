@@ -29,7 +29,7 @@ class TfIdent:
         self.num_PT1s:list[TfElement] = []
         self.den_PT1s:list[TfElement] = []
 
-    def _create_tf_elements(self, sol=None):
+    def _create_tf_elements(self, sol=None, wc_limits = None):
         # a bit of copy paste here...
         num_PT2s_new = []
         for i in range(self.model_order.NoPT2_numer):
@@ -37,9 +37,9 @@ class TfIdent:
                 oldPt2 = self.num_PT2s[i]
                 w0 = sol.value(oldPt2.wd)
                 d0 =  sol.value(oldPt2.dd)
-                pt2 = self._create_PT2_var(w0=w0,d0=d0,delta_lim=0.05)
+                pt2 = self._create_PT2_var(w0=w0,d0=d0,delta_lim=0.05,wc_limits=wc_limits)
             else:
-                pt2 = self._create_PT2_var()
+                pt2 = self._create_PT2_var(wc_limits=wc_limits)
             num_PT2s_new.append(pt2)
         self.num_PT2s = num_PT2s_new
 
@@ -51,9 +51,9 @@ class TfIdent:
                 oldPt2 = self.den_PT2s[i]
                 w0 = sol.value(oldPt2.wd)
                 d0 =  sol.value(oldPt2.dd)
-                pt2 = self._create_PT2_var(w0=w0,d0=d0,delta_lim=0.05)
+                pt2 = self._create_PT2_var(w0=w0,d0=d0,delta_lim=0.05,wc_limits=wc_limits)
             else:
-                pt2 = self._create_PT2_var()
+                pt2 = self._create_PT2_var(wc_limits=wc_limits)
 
             den_PT2s_new.append(pt2)
 
@@ -81,14 +81,21 @@ class TfIdent:
 
         return PT1(tau)
 
-    def _create_PT2_var(self,delta_lim=0.5,w0=100,d0=0.7):
+    def _create_PT2_var(self,delta_lim=0.35,w0=100,d0=0.7,wc_limits=None):
             opti = self.opti
 
             wd = opti.variable()
             dd = opti.variable()
+        
 
-            opti.subject_to(wd>=1)
-            opti.subject_to(wd <= 1e9)
+            if wc_limits:
+                if wc_limits[0] < 10.0:
+                    raise Exception("Very low wc limit in PT2 element!")
+                opti.subject_to(wd >= wc_limits[0])
+                opti.subject_to(wd <= wc_limits[1]*0.9)
+            else:
+                opti.subject_to(wd>=10)
+                opti.subject_to(wd <= 1e5)
             opti.set_initial(wd,w0)
 
             opti.subject_to(dd>=delta_lim)
@@ -102,6 +109,7 @@ class TfIdent:
     def _formulate_cost(self,mag,phase,omega):
         # Formulate cost
         J = 0
+
 
         for i in range(len(omega)):
 
@@ -139,6 +147,13 @@ class TfIdent:
 
 
     def identify_tf(self,mag, phase, omega):
+        """
+        Identifies the transfer function of the frequency data
+        mag: Magnitude
+        phase: phase, in radians
+        omega: frequency in rad/s
+        """
+        mag = np.log10(mag)
 
         opti = self.opti
 
@@ -151,7 +166,10 @@ class TfIdent:
         self.k = k
 
         # Create the model elements
-        self._create_tf_elements()
+        max_omega = np.max(omega)
+        min_omega = np.min(omega)
+        wc_limits = [min_omega,max_omega]
+        self._create_tf_elements(wc_limits=wc_limits)
         J = self._formulate_cost(mag,phase,omega)
 
         opti.minimize(J)
@@ -165,7 +183,7 @@ class TfIdent:
 
         # Prepare second solve
         opti.set_initial(self.k,sol.value(self.k))
-        self._create_tf_elements(sol)
+        self._create_tf_elements(sol,wc_limits=wc_limits)
         J = self._formulate_cost(mag,phase,omega)
 
         opti.minimize(J)
@@ -184,7 +202,7 @@ class TfIdent:
 
     def _check_sol(self,sol):
         if np.abs(sol.value(self.k)) < 0.9:
-            print(f"k is {sol.value(k)}, might want to scale up your input data for better numerical accuracy")
+            print(f"k is {sol.value(self.k)}, might want to scale up your input data for better numerical accuracy")
 
         pt2s = self.num_PT2s.copy()
         pt2s.extend(self.den_PT2s.copy())
