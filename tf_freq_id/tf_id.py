@@ -196,8 +196,7 @@ class TfIdent:
 
     def _check_sol(self, sol):
         if np.abs(sol.value(self.k)) < 0.9:
-            print(f"k is {sol.value(
-                self.k)}, might want to scale up your input data for better numerical accuracy")
+            print(f"k is {sol.value(self.k)}, might want to scale up your input data for better numerical accuracy")
 
         pt2s = self.num_PT2s.copy()
         pt2s.extend(self.den_PT2s.copy())
