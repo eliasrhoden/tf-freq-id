@@ -3,7 +3,15 @@ import casadi
 from typing import Protocol
 
 
-class TfElement(Protocol):
+
+class TfElement:
+
+    def __init__(self,element=None):
+        # int in touple = inverse
+        self.mdl_chain = []
+
+        if element is not None:
+            self.mdl_chain.append((False,element))
 
     def get_log_mag(self, w):
         pass
@@ -11,8 +19,27 @@ class TfElement(Protocol):
     def get_phase(self, w):
         pass
 
+    def __mul__(self,other):
+        mdl = TfElement()
+        mdl.mdl_chain.extend(self.mdl_chain)
+        mdl.mdl_chain.extend(other.mdl_chain)
+        return mdl
+
+    def __truediv__(self,other):
+        mdl = TfElement()
+        mdl.mdl_chain.extend(self.mdl_chain)
+
+        for e in other.mdl_chain:
+            inv = not e[0]
+            mdl.mdl_chain.append((inv,e[1])) 
+        return mdl
+
 
 class Integrator(TfElement):
+
+    def __init__(self):
+        super().__init__(self)
+
     def get_log_mag(self, w):
         return -1.0*casadi.log10(w)
 
@@ -25,6 +52,7 @@ class PT1(TfElement):
     # G(s) = (s*tau + 1)
     def __init__(self, tau):
         self.tau = tau
+        super().__init__(self)
 
     def get_log_mag(self, w):
         return casadi.log10(casadi.sqrt(1 + (w*self.tau)**2))
@@ -40,6 +68,7 @@ class PT2(TfElement):
     def __init__(self, wd, dd):
         self.wd = wd
         self.dd = dd
+        super().__init__(self)
 
     def _parts(self, wi):
         t2Re = (self.wd**2 - wi**2)
