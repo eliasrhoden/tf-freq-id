@@ -22,34 +22,35 @@ def d2c(Gd, Ts):
     return ctrl.ss(ac, bc, cc, dc)
 
 
-def fit(w, Y, dt, model_order=None, order_tol=0.1):
+def fit(w, mag, phase, Ts, model_order=None, order_tol=0.5):
     """
     Fit a transfer function model to frequency response data
     """
 
     if model_order is None:
-        for i in range(10):
-            Ge, error = self._fit_tf(w,Y, dt, i, order_tol)
+        for i in range(2,10):
+            Ge, error = _fit_tf(w,mag, phase, Ts, i, order_tol)
+            print(error)
             if error < order_tol:
                 break
     else:
-        Ge, error = self._fit_tf(w,Y, dt, model_order, order_tol)
+        Ge, error = _fit_tf(w,mag, phase, Ts, model_order, order_tol)
 
     return Ge, error
 
 
 
-def _fit_tf(w, Y, dt, model_order, order_tol):
-
-    n = model_order
+def _fit_tf(w, mag, phase, Ts, n, order_tol):
 
     M = []
     Y = []
 
-    for i,yi in enumerate(GY):
+    for i,wi in enumerate(w):
 
         Ri = mag[i]
+        #Ri = np.abs(yi)
         phi = phase[i]
+        #phi = np.angle(yi)
         wk = w[i]   
 
         Oi = wk*Ts
@@ -100,10 +101,12 @@ def _fit_tf(w, Y, dt, model_order, order_tol):
     a = np.r_[1,a]
 
     Ge = ctrl.tf(b,a,Ts)
-    Ge = ctrl.minreal(Ge,tol=0.1)
+    Ge = ctrl.minreal(Ge,tol=0.1,verbose=False)
 
-    Y_mdl = ctrl.freqresp(Ge,w)
+    Y_mdl = ctrl.freqresp(Ge,w).fresp[0][0]
 
-    error = np.mean(np.abs(Y - Y_mdl))
+    Ymeas = mag*np.exp(1j*phase)
+
+    error = np.mean(np.abs(Ymeas - Y_mdl))
 
     return d2c(Ge,Ts), error
