@@ -10,17 +10,10 @@ import tf_freq_id
 
 s = ctrl.tf('s')
 
-
 def pt2(w,d):
     return ctrl.tf(w**2,[1,2*w*d,w**2])
 
-wn = 10
-dn = 0.2
-
-
 G = pt2(10,0.2) *1/pt2(5,0.5)
-#G = pt2(5,0.5)
-G
 
 mag,phase,w = ctrl.bode(G,plot=False)
 
