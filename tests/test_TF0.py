@@ -40,7 +40,7 @@ m = tf_freq_id.TfRefine()
 
 m0 = tf_freq_id.PT2(10,0.2)/tf_freq_id.PT2(5,0.2)
 
-G0,G1 = m.identify_tf(m0,mags,phases,ws)
+G0,G1 = m.refine_tf(m0,mags,phases,ws)
 
 print(G0)
 

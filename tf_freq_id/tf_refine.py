@@ -215,7 +215,7 @@ class TfRefine:
             J += J_scale*(err)
         return J
 
-    def identify_tf(self, mdl, mag, phase, omega):
+    def refine_tf(self, mdl, mag, phase, omega):
         """
         Identifies the transfer function of the frequency data
         mag: Magnitude
