@@ -4,6 +4,8 @@ from typing import Protocol
 
 
 
+
+
 class TfElement:
 
     def __init__(self,element=None):
@@ -25,6 +27,15 @@ class TfElement:
         mdl.mdl_chain.extend(other.mdl_chain)
         return mdl
 
+
+    def __rtruediv__(self,other):
+        mdl = TfElement()
+
+        for e in self.mdl_chain:
+            inv = not e[0]
+            mdl.mdl_chain.append((inv,e[1])) 
+        return mdl
+
     def __truediv__(self,other):
         mdl = TfElement()
         mdl.mdl_chain.extend(self.mdl_chain)
@@ -33,6 +44,15 @@ class TfElement:
             inv = not e[0]
             mdl.mdl_chain.append((inv,e[1])) 
         return mdl
+
+    def __str__(self):
+        out = ""
+        for e in self.mdl_chain:
+            if e[0]:
+                out += "1/"
+            out += str(e[1]) + " "
+        return out
+
 
 
 class Integrator(TfElement):
@@ -60,6 +80,9 @@ class PT1(TfElement):
     def get_phase(self, w):
         return casadi.atan2(w*self.tau, 1)
 
+    def __str__(self):
+        return f"PT1({self.tau})"
+
 
 class PT2(TfElement):
     # Represents a second order polynominal
@@ -83,3 +106,6 @@ class PT2(TfElement):
     def get_phase(self, w):
         t2Re, t2Im = self._parts(w)
         return casadi.atan2(t2Im, t2Re)
+
+    def __str__(self):
+        return f"PT2({self.wd},{self.dd})"
