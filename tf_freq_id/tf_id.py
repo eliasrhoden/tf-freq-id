@@ -22,21 +22,27 @@ def d2c(Gd, Ts):
     return ctrl.ss(ac, bc, cc, dc)
 
 
-def fit(w, mag, phase, Ts, model_order=None, order_tol=0.5):
+def fit(w, mag, phase, model_order=None, order_tol=0.5):
     """
     Fit a transfer function model to frequency response data
     """
 
+    w_max = np.max(w)
+    f_max = w_max/(2*np.pi)
+    Ts = 1/(f_max)
+    #Ts = 0.05 
+    print(Ts)
+
     if model_order is None:
         for i in range(2,10):
-            Ge, error = _fit_tf(w,mag, phase, Ts, i, order_tol)
+            Ge,Gd, error = _fit_tf(w,mag, phase, Ts, i, order_tol)
             print(error)
             if error < order_tol:
                 break
     else:
-        Ge, error = _fit_tf(w,mag, phase, Ts, model_order, order_tol)
+        Ge,Gd, error = _fit_tf(w,mag, phase, Ts, model_order, order_tol)
 
-    return Ge, error
+    return Ge,Gd, error
 
 
 
@@ -44,6 +50,7 @@ def _fit_tf(w, mag, phase, Ts, n, order_tol):
 
     M = []
     Y = []
+    alpha = 1e7
 
     for i,wi in enumerate(w):
 
@@ -85,13 +92,35 @@ def _fit_tf(w, mag, phase, Ts, n, order_tol):
             else:
                 row2.append(np.sin(-Oi*i))
 
+        row1 = np.array(row1)*alpha
+        row2 = np.array(row2)*alpha
+
         M.append(row1)
         M.append(row2)
 
-        Y.append(Ri*np.cos(phi))
-        Y.append(Ri*np.sin(phi))
+        Y.append(Ri*np.cos(phi)*alpha)
+        Y.append(Ri*np.sin(phi)*alpha)
 
-    sol = np.linalg.lstsq(M,Y,rcond=None)
+    w_arr = []
+    for wi in w:
+        w_arr.append(1/wi)
+        w_arr.append(1/wi)
+
+    W = np.diag(w_arr)
+    W *= 1/w_arr[-1]
+    #W *= 1e3
+
+    #sol = np.linalg.lstsq(M,Y,rcond=None)
+
+    #W = np.diag(np.ones(len(w_arr)))*1e7
+
+    M = np.array(M)
+    Y= np.array(Y)
+
+    Ms = (M.T@W@M)
+    Ys = (M.T@W@Y)
+    sol = np.linalg.lstsq(Ms,Ys,rcond=None)
+
     theta = sol[0]
     theta
 
@@ -101,7 +130,7 @@ def _fit_tf(w, mag, phase, Ts, n, order_tol):
     a = np.r_[1,a]
 
     Ge = ctrl.tf(b,a,Ts)
-    Ge = ctrl.minreal(Ge,tol=0.1,verbose=False)
+    Ge = ctrl.minreal(Ge,tol=0.001,verbose=False)
 
     Y_mdl = ctrl.freqresp(Ge,w).fresp[0][0]
 
@@ -109,4 +138,4 @@ def _fit_tf(w, mag, phase, Ts, n, order_tol):
 
     error = np.mean(np.abs(Ymeas - Y_mdl))
 
-    return d2c(Ge,Ts), error
+    return d2c(Ge,Ts),Ge, error

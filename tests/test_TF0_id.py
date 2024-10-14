@@ -13,7 +13,7 @@ s = ctrl.tf('s')
 def pt2(w,d):
     return ctrl.tf(w**2,[1,2*w*d,w**2])
 
-G = pt2(10,0.2) *1/pt2(5,0.5)
+G = pt2(10,0.2) *1/pt2(5,0.05)
 
 mag,phase,w = ctrl.bode(G,plot=False)
 
@@ -26,17 +26,17 @@ phases = phase[indx]
 
 np.random.seed(1337)
 
-mags = 10**(np.log10(mags) + 0.1*np.random.randn(len(mags)))
+mags = 10**(np.log10(mags) + 0.01*np.random.randn(len(mags)))
 phases += np.random.randn(len(phases))*np.deg2rad(5)
 
 plt.figure()
-plt.semilogx(w,mag)
-plt.plot(ws, mags,'o-')
+plt.semilogx(w,ctrl.mag2db(mag))
+plt.semilogx(ws, ctrl.mag2db(mags),'o-')
 plt.figure()
 plt.semilogx(w, phase)
 plt.semilogx(ws, phases,'o-')
 
-G1,err = tf_freq_id.fit(ws,mags,phases,0.1)
+G1,Gd,err = tf_freq_id.fit(ws,mags,phases,model_order=4)
 print(err)
 print(G1)
 

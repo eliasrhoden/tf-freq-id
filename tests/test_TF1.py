@@ -49,7 +49,7 @@ if False:
 Gm = (tf_freq_id.PT2(50,0.5)*tf_freq_id.PT2(500,0.5))/tf_freq_id.PT2(1000,0.5)
 
 tfrefine = tf_freq_id.TfRefine()
-G0,G1 = tfrefine.identify_tf(Gm,mags,phases,ws)
+G0,G1 = tfrefine.refine_tf(Gm,mags,phases,ws)
 
 mag0,ph0,w0 = ctrl.bode(G0,plot=False,wrap_phase=True)
 mag1,ph1,w1 = ctrl.bode(G1,plot=False,wrap_phase=True)
