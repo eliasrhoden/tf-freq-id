@@ -26,27 +26,24 @@ def fit(w, mag, phase, model_order=None, order_tol=0.5):
     """
     Fit a transfer function model to frequency response data
     """
-
-    w_max = np.max(w)
+    w_max = np.max(w) * 5
     f_max = w_max/(2*np.pi)
-    Ts = 1/(f_max)
-    #Ts = 0.05 
-    print(Ts)
+    Ts = 1/(2*f_max)
 
     if model_order is None:
         for i in range(2,10):
-            Ge,Gd, error = _fit_tf(w,mag, phase, Ts, i, order_tol)
+            Ge,Gd, error = _fit_tf(w,mag, phase, Ts, i)
             print(error)
             if error < order_tol:
                 break
     else:
-        Ge,Gd, error = _fit_tf(w,mag, phase, Ts, model_order, order_tol)
+        Ge,Gd, error = _fit_tf(w,mag, phase, Ts, model_order)
 
     return Ge,Gd, error
 
 
 
-def _fit_tf(w, mag, phase, Ts, n, order_tol):
+def _fit_tf(w, mag, phase, Ts, n):
 
     M = []
     Y = []
@@ -103,12 +100,15 @@ def _fit_tf(w, mag, phase, Ts, n, order_tol):
 
     w_arr = []
     for wi in w:
-        w_arr.append(1/wi)
-        w_arr.append(1/wi)
+        #wscale = 1/wi * 1/np.abs(Ri)
+        #wscale = 1/np.abs(Ri)
+        wscale = 1/wi 
+        w_arr.append(wscale)
+        w_arr.append(wscale)
 
     W = np.diag(w_arr)
     W *= 1/w_arr[-1]
-    #W *= 1e3
+    W *= 1e3
 
     #sol = np.linalg.lstsq(M,Y,rcond=None)
 
